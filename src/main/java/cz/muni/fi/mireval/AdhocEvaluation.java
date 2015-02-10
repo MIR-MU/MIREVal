@@ -291,6 +291,8 @@ public class AdhocEvaluation extends Evaluation {
             Record[] nonRelevantRetrieved = (Record[]) listOfNonRelevantRetrieved.get(i);
             double queryBpref = 0d;
             double rSum = 0d;
+            int relevantDocsForQuery = qrels.getRelevantDocuments(queryNo[i]).size();
+            int nonRelevantDocsForQuery = qrels.getNonRelevantDocuments(queryNo[i]).size();
             for (int j = 0; j < relevantRetrieved.length; j++) {
                 if (relevantRetrieved[j].rank < numberOfRelevant[i]) {
                     RPrecision[i] += 1d;
@@ -316,13 +318,13 @@ public class AdhocEvaluation extends Evaluation {
                     }
                 }
                 if (n > 0) {
-                    n = n / Math.min(relevantRetrieved.length, nonRelevantRetrieved.length);
+                    n = n / Math.min(relevantDocsForQuery, nonRelevantDocsForQuery);
                 }
                 n = 1 - n;
                 rSum += n;
             }
             
-            queryBpref = rSum / relevantRetrieved.length;
+            queryBpref = rSum / relevantDocsForQuery;
             bprefByQuery.add(queryBpref);
             averageBpref += queryBpref;
             
