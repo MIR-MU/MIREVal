@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.Vector;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -55,7 +55,7 @@ public class AdhocEvaluation extends Evaluation {
 
     protected static final Logger logger = Logger.getLogger(AdhocEvaluation.class);
 
-    protected static final int[] PRECISION_RANKS = new int[]{1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100, 200, 500, 1000};
+    protected static final int[] PRECISION_RANKS = new int[]{1, 2, 3, 4, 5, 10};
     protected static final int[] PRECISION_PERCENTAGES = new int[]{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 
     /**
@@ -162,14 +162,14 @@ public class AdhocEvaluation extends Evaluation {
         int[] numberOfRelevantRetrieved = null;
         int[] numberOfRelevant = null;
         int[] numberOfRetrieved = null;
-        Vector<Record[]> listOfRetrieved = new Vector<Record[]>();
-        Vector<Record[]> listOfRelevantRetrieved = new Vector<Record[]>();
-        Vector<Record[]> listOfNonRelevantRetrieved = new Vector<Record[]>();
-        Vector<Integer> vecNumberOfRelevant = new Vector<Integer>();
-        Vector<Integer> vecNumberOfRetrieved = new Vector<Integer>();
-        Vector<Integer> vecNumberOfRelevantRetrieved = new Vector<Integer>();
-        Vector<Integer> vecNumberOfNonRelevantRetrieved = new Vector<Integer>();
-        Vector<String> vecQueryNo = new Vector<String>();
+        List<Record[]> listOfRetrieved = new ArrayList<Record[]>();
+        List<Record[]> listOfRelevantRetrieved = new ArrayList<Record[]>();
+        List<Record[]> listOfNonRelevantRetrieved = new ArrayList<Record[]>();
+        List<Integer> numberOfRelevantList = new ArrayList<Integer>();
+        List<Integer> numberOfRetrievedList = new ArrayList<Integer>();
+        List<Integer> numberOfRelevantRetrievedList = new ArrayList<Integer>();
+        List<Integer> numberOfNonRelevantRetrievedList = new ArrayList<Integer>();
+        List<String> queryNoList = new ArrayList<String>();
 
         /**
          * Read records from the result file
@@ -182,9 +182,9 @@ public class AdhocEvaluation extends Evaluation {
             int numberOfRetrievedCounter = 0;
             int numberOfRelevantRetrievedCounter = 0;
             int numberOfNonRelevantRetrievedCounter = 0;
-            Vector<Record> relevantRetrieved = new Vector<Record>();
-            Vector<Record> retrieved = new Vector<Record>();
-            Vector<Record> nonRelevantRetrieved = new Vector<Record>();
+            List<Record> relevantRetrievedTemp = new ArrayList<Record>();
+            List<Record> retrievedTemp = new ArrayList<Record>();
+            List<Record> nonRelevantRetrievedTemp = new ArrayList<Record>();
             while ((str = br.readLine()) != null) {
                 StringTokenizer stk = new StringTokenizer(str);
                 String queryid = stk.nextToken();
@@ -211,43 +211,43 @@ public class AdhocEvaluation extends Evaluation {
                 int rank = Integer.parseInt(stk.nextToken());
                 if (!previous.equals(queryid)) {
                     if (effQueryCounter != 0) {
-                        vecNumberOfRetrieved.addElement(Integer.valueOf(numberOfRetrievedCounter));
-                        vecNumberOfRelevantRetrieved.addElement(Integer.valueOf(numberOfRelevantRetrievedCounter));
-                        vecNumberOfNonRelevantRetrieved.addElement(Integer.valueOf(numberOfNonRelevantRetrievedCounter));
-                        listOfRetrieved.addElement((Record[]) retrieved.toArray(new Record[retrieved.size()]));
-                        listOfRelevantRetrieved.addElement((Record[]) relevantRetrieved.toArray(new Record[relevantRetrieved.size()]));
-                        listOfNonRelevantRetrieved.addElement((Record[]) nonRelevantRetrieved.toArray(new Record[nonRelevantRetrieved.size()]));
+                        numberOfRetrievedList.add(Integer.valueOf(numberOfRetrievedCounter));
+                        numberOfRelevantRetrievedList.add(Integer.valueOf(numberOfRelevantRetrievedCounter));
+                        numberOfNonRelevantRetrievedList.add(Integer.valueOf(numberOfNonRelevantRetrievedCounter));
+                        listOfRetrieved.add((Record[]) retrievedTemp.toArray(new Record[retrievedTemp.size()]));
+                        listOfRelevantRetrieved.add((Record[]) relevantRetrievedTemp.toArray(new Record[relevantRetrievedTemp.size()]));
+                        listOfNonRelevantRetrieved.add((Record[]) nonRelevantRetrievedTemp.toArray(new Record[nonRelevantRetrievedTemp.size()]));
                         numberOfRetrievedCounter = 0;
                         numberOfRelevantRetrievedCounter = 0;
                         numberOfNonRelevantRetrievedCounter = 0;
-                        retrieved = new Vector<Record>();
-                        relevantRetrieved = new Vector<Record>();
-                        nonRelevantRetrieved = new Vector<Record>();
+                        retrievedTemp = new ArrayList<Record>();
+                        relevantRetrievedTemp = new ArrayList<Record>();
+                        nonRelevantRetrievedTemp = new ArrayList<Record>();
                     }
                     effQueryCounter++;
-                    vecQueryNo.addElement(queryid);
-                    vecNumberOfRelevant.addElement(Integer.valueOf(qrels.getNumberOfRelevant(queryid)));
+                    queryNoList.add(queryid);
+                    numberOfRelevantList.add(Integer.valueOf(qrels.getNumberOfRelevant(queryid)));
                 }
                 previous = queryid;
                 numberOfRetrievedCounter++;
                 totalNumberOfRetrieved++;
-                retrieved.addElement(new Record(queryid, docID, rank));
+                retrievedTemp.add(new Record(queryid, docID, rank));
                 if (qrels.isRelevant(queryid, docID)) {
-                    relevantRetrieved.addElement(new Record(queryid, docID, rank));
+                    relevantRetrievedTemp.add(new Record(queryid, docID, rank));
                     numberOfRelevantRetrievedCounter++;
                 } else if (qrels.isNonRelevantJudged(queryid, docID)) {
-                    nonRelevantRetrieved.addElement(new Record(queryid, docID, rank));
+                    nonRelevantRetrievedTemp.add(new Record(queryid, docID, rank));
                     numberOfNonRelevantRetrievedCounter++;
                 }
             }
-            listOfRelevantRetrieved.addElement(relevantRetrieved.toArray(new Record[relevantRetrieved.size()]));
-            listOfRetrieved.addElement(retrieved.toArray(new Record[retrieved.size()]));
-            listOfNonRelevantRetrieved.addElement(nonRelevantRetrieved.toArray(new Record[nonRelevantRetrieved.size()]));
-            vecNumberOfRetrieved.addElement(Integer.valueOf(numberOfRetrievedCounter));
-            vecNumberOfRelevantRetrieved.addElement(Integer.valueOf(numberOfRelevantRetrievedCounter));
-            vecNumberOfNonRelevantRetrieved.addElement(Integer.valueOf(numberOfNonRelevantRetrievedCounter));
+            listOfRelevantRetrieved.add(relevantRetrievedTemp.toArray(new Record[relevantRetrievedTemp.size()]));
+            listOfRetrieved.add(retrievedTemp.toArray(new Record[retrievedTemp.size()]));
+            listOfNonRelevantRetrieved.add(nonRelevantRetrievedTemp.toArray(new Record[nonRelevantRetrievedTemp.size()]));
+            numberOfRetrievedList.add(Integer.valueOf(numberOfRetrievedCounter));
+            numberOfRelevantRetrievedList.add(Integer.valueOf(numberOfRelevantRetrievedCounter));
+            numberOfNonRelevantRetrievedList.add(Integer.valueOf(numberOfNonRelevantRetrievedCounter));
             br.close();
-            this.queryNo = vecQueryNo.toArray(new String[vecQueryNo.size()]);
+            this.queryNo = queryNoList.toArray(new String[queryNoList.size()]);
             numberOfRelevantRetrieved = new int[effQueryCounter];
             numberOfRelevant = new int[effQueryCounter];
             numberOfRetrieved = new int[effQueryCounter];
@@ -256,9 +256,9 @@ public class AdhocEvaluation extends Evaluation {
             this.totalNumberOfRetrieved = 0;
             for (int i = 0; i < effQueryCounter; i++) {
                 numberOfRelevantRetrieved[i]
-                        = ((Integer) vecNumberOfRelevantRetrieved.get(i)).intValue();
-                numberOfRelevant[i] = ((Integer) vecNumberOfRelevant.get(i)).intValue();
-                numberOfRetrieved[i] = ((Integer) vecNumberOfRetrieved.get(i)).intValue();
+                        = ((Integer) numberOfRelevantRetrievedList.get(i)).intValue();
+                numberOfRelevant[i] = ((Integer) numberOfRelevantList.get(i)).intValue();
+                numberOfRetrieved[i] = ((Integer) numberOfRetrievedList.get(i)).intValue();
                 this.totalNumberOfRetrieved += numberOfRetrieved[i];
                 this.totalNumberOfRelevant += numberOfRelevant[i];
                 this.totalNumberOfRelevantRetrieved += numberOfRelevantRetrieved[i];
@@ -287,53 +287,53 @@ public class AdhocEvaluation extends Evaluation {
         averageBpref = 0d;
         numberOfEffQuery = effQueryCounter;
         for (int i = 0; i < effQueryCounter; i++) {
-            Record[] relevantRetrieved = (Record[]) listOfRelevantRetrieved.get(i);
-            Record[] nonRelevantRetrieved = (Record[]) listOfNonRelevantRetrieved.get(i);
+            Record[] relevantRetrievedForQuery = (Record[]) listOfRelevantRetrieved.get(i);
+            Record[] nonRelevantRetrievedForQuery = (Record[]) listOfNonRelevantRetrieved.get(i);
             double queryBpref = 0d;
             double rSum = 0d;
-            int relevantDocsForQuery = qrels.getRelevantDocuments(queryNo[i]).size();
-            int nonRelevantDocsForQuery = qrels.getNonRelevantDocuments(queryNo[i]).size();
-            for (int j = 0; j < relevantRetrieved.length; j++) {
-                if (relevantRetrieved[j].rank < numberOfRelevant[i]) {
+            int relevantDocsCountForQuery = qrels.getRelevantDocuments(queryNo[i]).size();
+            int nonRelevantDocsCountForQuery = qrels.getNonRelevantDocuments(queryNo[i]).size();
+            for (int j = 0; j < relevantRetrievedForQuery.length; j++) {
+                if (relevantRetrievedForQuery[j].rank < numberOfRelevant[i]) {
                     RPrecision[i] += 1d;
                 }
                 for (int precisionRank : PRECISION_RANKS) {
-                    if (relevantRetrieved[j].rank < precisionRank) {
+                    if (relevantRetrievedForQuery[j].rank <= precisionRank) {
                         adjustOrPutValue(precisionAtRankByQuery.get(i), precisionRank, 1.0d, 1.0d);
                     }
                 }
 
                 ExactPrecision[i] += (double) (j + 1)
-                        / (1d + relevantRetrieved[j].rank);
-                relevantRetrieved[j].precision
+                        / (1d + relevantRetrievedForQuery[j].rank);
+                relevantRetrievedForQuery[j].precision
                         = (double) (j + 1)
-                        / (1d + relevantRetrieved[j].rank);
-                relevantRetrieved[j].recall
+                        / (1d + relevantRetrievedForQuery[j].rank);
+                relevantRetrievedForQuery[j].recall
                         = (double) (j + 1) / numberOfRelevant[i];
                 
                 double n = 0;
-                for (Record r : nonRelevantRetrieved) {
-                    if (r.rank < relevantRetrieved[j].rank) {
+                for (Record r : nonRelevantRetrievedForQuery) {
+                    if (r.rank < relevantRetrievedForQuery[j].rank) {
                         n += 1;
                     }
                 }
                 if (n > 0) {
-                    n = n / Math.min(relevantDocsForQuery, nonRelevantDocsForQuery);
+                    n = n / Math.min(relevantDocsCountForQuery, nonRelevantDocsCountForQuery);
                 }
                 n = 1 - n;
                 rSum += n;
             }
             
-            queryBpref = rSum / relevantDocsForQuery;
+            queryBpref = rSum / relevantDocsCountForQuery;
             bprefByQuery.add(queryBpref);
             averageBpref += queryBpref;
             
-            for (int j = 0; j < relevantRetrieved.length; j++) {
+            for (int j = 0; j < relevantRetrievedForQuery.length; j++) {
                 for (int precisionPercentage : PRECISION_PERCENTAGES) {
                     final double fraction = ((double) precisionPercentage) / 100.0d;
-                    if (relevantRetrieved[j].recall >= fraction
-                            && (relevantRetrieved[j].precision >= getValueOrZero(precisionAtRecallByQuery.get(i).get(precisionPercentage)))) {
-                        precisionAtRecallByQuery.get(i).put(precisionPercentage, relevantRetrieved[j].precision);
+                    if (relevantRetrievedForQuery[j].recall >= fraction
+                            && (relevantRetrievedForQuery[j].precision >= getValueOrZero(precisionAtRecallByQuery.get(i).get(precisionPercentage)))) {
+                        precisionAtRecallByQuery.get(i).put(precisionPercentage, relevantRetrievedForQuery[j].precision);
                     }
                 }
 
@@ -348,7 +348,7 @@ public class AdhocEvaluation extends Evaluation {
                 RPrecision[i] /= ((double) numberOfRelevant[i]);
             }
             meanAveragePrecision += ExactPrecision[i];
-            this.averagePrecisionOfEachQuery[i] = ExactPrecision[i];
+            averagePrecisionOfEachQuery[i] = ExactPrecision[i];
             meanRelevantPrecision += RPrecision[i];
 
             for (int precisionRank : PRECISION_RANKS) {
@@ -356,6 +356,8 @@ public class AdhocEvaluation extends Evaluation {
                         getValueOrZero(precisionAtRankByQuery.get(i).get(precisionRank)) / (double) precisionRank,
                         getValueOrZero(precisionAtRankByQuery.get(i).get(precisionRank)) / (double) precisionRank);
             }
+            
+            
         }
         for (int i = 0; i < effQueryCounter; i++) {
             for (int precisionRecall : PRECISION_PERCENTAGES) {
@@ -363,6 +365,8 @@ public class AdhocEvaluation extends Evaluation {
                         getValueOrZero(precisionAtRecallByQuery.get(i).get(precisionRecall)),
                         getValueOrZero(precisionAtRecallByQuery.get(i).get(precisionRecall)));
             }
+//            double prec = vecNumberOfRelevantRetrieved.get(i) / vecNumberOfRetrieved.get(i);
+//            meanAveragePrecision += prec;
         }
 
         final double numberOfEffQueryD = (double) numberOfEffQuery;
@@ -372,7 +376,12 @@ public class AdhocEvaluation extends Evaluation {
         meanAveragePrecision /= (double) numberOfEffQuery;
         meanRelevantPrecision /= (double) numberOfEffQuery;
         averageBpref /= (double) numberOfEffQuery;
-        System.out.println(bprefByQuery);
+//        System.out.println(bprefByQuery);
+//        System.out.println("AVG P");
+//        for (int i = 0; i < averagePrecisionOfEachQuery.length; i++) {
+//            System.out.println(queryNo[i]+" "+averagePrecisionOfEachQuery[i]);
+//            
+//        }
     }
 
     /**
@@ -413,9 +422,9 @@ public class AdhocEvaluation extends Evaluation {
         out.println("Relevant retrieved = " + totalNumberOfRelevantRetrieved);
         out.println("____________________________________");
         out.println(
-                "Average Precision: " + round(meanAveragePrecision, 4));
-        out.println(
-                "R Precision      : " + round(meanRelevantPrecision, 4));
+                "MAP: " + round(meanAveragePrecision, 4));
+//        out.println(
+//                "R Precision      : " + round(meanRelevantPrecision, 4));
         out.println("____________________________________");
         out.println(
                 "Average Bpref     : " + round(averageBpref, 4));
@@ -424,13 +433,10 @@ public class AdhocEvaluation extends Evaluation {
             out.printf("Precision at   %d : %s\n", precisionRank, round(precisionAtRank.get(precisionRank), 4));
         }
         out.println("____________________________________");
-        for (int precisionPercent : PRECISION_PERCENTAGES) {
-            out.printf("Precision at   %d%%: %s\n", precisionPercent, round(precisionAtRecall.get(precisionPercent), 4));
-        }
-        out.println("____________________________________");
-        out.println(
-                "Average Precision: " + round(meanAveragePrecision, 4));
-        System.out.println("Average Precision: " + round(meanAveragePrecision, 4));
+//        for (int precisionPercent : PRECISION_PERCENTAGES) {
+//            out.printf("Precision at   %d%%: %s\n", precisionPercent, round(precisionAtRecall.get(precisionPercent), 4));
+//        }
+//        out.println("____________________________________");
         out.flush();
     }
 
