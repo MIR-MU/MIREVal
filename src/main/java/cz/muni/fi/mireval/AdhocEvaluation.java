@@ -465,9 +465,9 @@ public class AdhocEvaluation extends Evaluation {
         }
         if (printBprefAtRankForQuery) {
             out.println("Bpref at rank by query");
-            for (Map.Entry<Integer, List<Double>> bprefAtRankByQuery : bprefAtRankByQuery.entrySet()) {
-                List<Double> queryBprefs = bprefAtRankByQuery.getValue();
-                out.printf("Bpref Rank %d\n", bprefAtRankByQuery.getKey());
+            for (Integer bprefRank : bprefAtRankByQuery.keySet()) {
+                List<Double> queryBprefs = bprefAtRankByQuery.get(bprefRank);
+                out.printf("Bpref Rank %d\n", bprefRank);
                 for (int i = 0; i < queryBprefs.size(); i++) {
                     out.printf("Query %d: %s\n", i, queryBprefs.get(i));
                 }
