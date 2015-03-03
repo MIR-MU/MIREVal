@@ -57,7 +57,16 @@ public class AdhocEvaluation extends Evaluation {
 
     protected static final int[] PRECISION_RANKS = new int[]{1, 2, 3, 4, 5, 10};
     protected static final int[] PRECISION_PERCENTAGES = new int[]{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-
+    protected static final int[] BPREF_RANKS = new int[]{20, 50, 100, 1000};
+    
+    private static final boolean printRprecision = false;
+    private static final boolean printMAP = true;
+    private static final boolean printAvgPrecisionForQuery = true;
+    private static final boolean printBprefAtRankForQuery = true;
+    private static final boolean printBprefRanks = true;
+    private static final boolean printPrecisionRanks = true;
+    private static final boolean printPrecisionPercentages = false;
+    
     /**
      * The maximum number of documents retrieved for a query.
      */
@@ -86,6 +95,12 @@ public class AdhocEvaluation extends Evaluation {
     protected Map<Integer, Double> precisionAtRank = new HashMap<Integer, Double>();
 
     protected Map<Integer, Double> precisionAtRecall = new HashMap<Integer, Double>();
+    
+    protected Map<Integer, Double> bprefAtRank = new HashMap<Integer, Double>();
+    
+    protected List<Double> avgPrecisionsByQuery = new ArrayList<Double>();
+    
+    protected Map<Integer, List<Double>> bprefAtRankByQuery = new HashMap<Integer, List<Double>>();
 
     /**
      * Create adhoc evaluation
@@ -121,16 +136,10 @@ public class AdhocEvaluation extends Evaluation {
      */
     protected double meanRelevantPrecision;
     /**
-     * The average precision of each query.
-     */
-    protected double[] averagePrecisionOfEachQuery;
-    /**
      * The query number of each query.
      */
     protected String[] queryNo;
     
-    protected double averageBpref;
-
     /**
      * Initialise variables.
      */
@@ -143,7 +152,6 @@ public class AdhocEvaluation extends Evaluation {
         this.totalNumberOfRelevant = 0;
         this.meanAveragePrecision = 0;
         this.meanRelevantPrecision = 0;
-
     }
 
     /**
@@ -267,11 +275,8 @@ public class AdhocEvaluation extends Evaluation {
             logger.error("Exception while evaluating", e);
         }
 
-        this.averagePrecisionOfEachQuery = new double[effQueryCounter];
-
         List<Map<Integer,Double>> precisionAtRankByQuery = new ArrayList<Map<Integer,Double>>(effQueryCounter);
         List<Map<Integer,Double>> precisionAtRecallByQuery = new ArrayList<Map<Integer,Double>>(effQueryCounter);
-        List<Double> bprefByQuery = new ArrayList<Double>(effQueryCounter);
         for (int i = 0; i < effQueryCounter; i++) {
             precisionAtRankByQuery.add(new HashMap<Integer,Double>());
             precisionAtRecallByQuery.add(new HashMap<Integer,Double>());
@@ -284,13 +289,11 @@ public class AdhocEvaluation extends Evaluation {
 
         meanAveragePrecision = 0d;
         meanRelevantPrecision = 0d;
-        averageBpref = 0d;
         numberOfEffQuery = effQueryCounter;
+        
         for (int i = 0; i < effQueryCounter; i++) {
             Record[] relevantRetrievedForQuery = (Record[]) listOfRelevantRetrieved.get(i);
             Record[] nonRelevantRetrievedForQuery = (Record[]) listOfNonRelevantRetrieved.get(i);
-            double queryBpref = 0d;
-            double rSum = 0d;
             int relevantDocsCountForQuery = qrels.getRelevantDocuments(queryNo[i]).size();
             int nonRelevantDocsCountForQuery = qrels.getNonRelevantDocuments(queryNo[i]).size();
             for (int j = 0; j < relevantRetrievedForQuery.length; j++) {
@@ -309,24 +312,35 @@ public class AdhocEvaluation extends Evaluation {
                         = (double) (j + 1)
                         / (1d + relevantRetrievedForQuery[j].rank);
                 relevantRetrievedForQuery[j].recall
-                        = (double) (j + 1) / numberOfRelevant[i];
-                
-                double n = 0;
-                for (Record r : nonRelevantRetrievedForQuery) {
-                    if (r.rank < relevantRetrievedForQuery[j].rank) {
-                        n += 1;
-                    }
-                }
-                if (n > 0) {
-                    n = n / Math.min(relevantDocsCountForQuery, nonRelevantDocsCountForQuery);
-                }
-                n = 1 - n;
-                rSum += n;
+                        = (double) (j + 1) / numberOfRelevant[i];                
             }
             
-            queryBpref = rSum / relevantDocsCountForQuery;
-            bprefByQuery.add(queryBpref);
-            averageBpref += queryBpref;
+            for (int bprefRank : BPREF_RANKS) {
+                double rSum = 0d;
+                List<Double> bprefsAtRank = bprefAtRankByQuery.get(bprefRank);
+                if (bprefsAtRank == null) {
+                    bprefsAtRank = new ArrayList<Double>();
+                    bprefAtRankByQuery.put(bprefRank, bprefsAtRank);
+                }
+                for (int j = 0; j < relevantRetrievedForQuery.length; j++) {
+                    if (relevantRetrievedForQuery[j].rank <= bprefRank) {
+                        double n = 0;
+                        for (Record r : nonRelevantRetrievedForQuery) {
+                            if (r.rank < relevantRetrievedForQuery[j].rank) {
+                                n += 1;
+                            }
+                        }
+                        if (n > 0) {
+                            n = Math.min(n, relevantDocsCountForQuery) / Math.min(relevantDocsCountForQuery, nonRelevantDocsCountForQuery);
+                        }
+                        n = 1 - n;
+                        rSum += n;
+                    }
+                }
+                double queryBprefAtRank = rSum / relevantDocsCountForQuery;
+                adjustOrPutValue(bprefAtRank, bprefRank, queryBprefAtRank, queryBprefAtRank);
+                bprefsAtRank.add(queryBprefAtRank);
+            }
             
             for (int j = 0; j < relevantRetrievedForQuery.length; j++) {
                 for (int precisionPercentage : PRECISION_PERCENTAGES) {
@@ -347,8 +361,10 @@ public class AdhocEvaluation extends Evaluation {
             if (numberOfRelevant[i] > 0) {
                 RPrecision[i] /= ((double) numberOfRelevant[i]);
             }
+            if (printAvgPrecisionForQuery) {
+                avgPrecisionsByQuery.add(ExactPrecision[i]);
+            }
             meanAveragePrecision += ExactPrecision[i];
-            averagePrecisionOfEachQuery[i] = ExactPrecision[i];
             meanRelevantPrecision += RPrecision[i];
 
             for (int precisionRank : PRECISION_RANKS) {
@@ -365,8 +381,6 @@ public class AdhocEvaluation extends Evaluation {
                         getValueOrZero(precisionAtRecallByQuery.get(i).get(precisionRecall)),
                         getValueOrZero(precisionAtRecallByQuery.get(i).get(precisionRecall)));
             }
-//            double prec = vecNumberOfRelevantRetrieved.get(i) / vecNumberOfRetrieved.get(i);
-//            meanAveragePrecision += prec;
         }
 
         final double numberOfEffQueryD = (double) numberOfEffQuery;
@@ -375,13 +389,8 @@ public class AdhocEvaluation extends Evaluation {
         transformValues(precisionAtRank, numberOfEffQueryD);
         meanAveragePrecision /= (double) numberOfEffQuery;
         meanRelevantPrecision /= (double) numberOfEffQuery;
-        averageBpref /= (double) numberOfEffQuery;
-//        System.out.println(bprefByQuery);
-//        System.out.println("AVG P");
-//        for (int i = 0; i < averagePrecisionOfEachQuery.length; i++) {
-//            System.out.println(queryNo[i]+" "+averagePrecisionOfEachQuery[i]);
-//            
-//        }
+        
+        transformValues(bprefAtRank, numberOfEffQueryD);
     }
 
     /**
@@ -398,7 +407,7 @@ public class AdhocEvaluation extends Evaluation {
                 sb.append(
                         queryNo[i]
                         + " "
-                        + round(this.averagePrecisionOfEachQuery[i], 4)
+                        + round(this.avgPrecisionsByQuery.get(i), 4)
                         + "\n");
             }
             out.print(sb.toString());
@@ -421,22 +430,49 @@ public class AdhocEvaluation extends Evaluation {
         out.println("Relevant           = " + totalNumberOfRelevant);
         out.println("Relevant retrieved = " + totalNumberOfRelevantRetrieved);
         out.println("____________________________________");
-        out.println(
-                "MAP: " + round(meanAveragePrecision, 4));
-//        out.println(
-//                "R Precision      : " + round(meanRelevantPrecision, 4));
-        out.println("____________________________________");
-        out.println(
-                "Average Bpref     : " + round(averageBpref, 4));
-        out.println("____________________________________");
-        for (int precisionRank : PRECISION_RANKS) {
-            out.printf("Precision at   %d : %s\n", precisionRank, round(precisionAtRank.get(precisionRank), 4));
+        if (printMAP) {
+            out.println("MAP: " + round(meanAveragePrecision, 4));
+            out.println("____________________________________");
         }
-        out.println("____________________________________");
-//        for (int precisionPercent : PRECISION_PERCENTAGES) {
-//            out.printf("Precision at   %d%%: %s\n", precisionPercent, round(precisionAtRecall.get(precisionPercent), 4));
-//        }
-//        out.println("____________________________________");
+        if (printRprecision) {
+            out.println("R Precision      : " + round(meanRelevantPrecision, 4));
+            out.println("____________________________________");
+        }
+        if (printBprefRanks) {
+            for (int bprefRank : BPREF_RANKS) {
+                out.printf("Bpref at   %d : %s\n", bprefRank, round(bprefAtRank.get(bprefRank), 4));
+            }
+            out.println("____________________________________");
+        }
+        if (printPrecisionRanks) {
+            for (int precisionRank : PRECISION_RANKS) {
+                out.printf("Precision at   %d : %s\n", precisionRank, round(precisionAtRank.get(precisionRank), 4));
+            }
+            out.println("____________________________________");
+        }
+        if (printPrecisionPercentages) {
+            for (int precisionPercent : PRECISION_PERCENTAGES) {
+                out.printf("Precision at   %d%%: %s\n", precisionPercent, round(precisionAtRecall.get(precisionPercent), 4));
+            }
+            out.println("____________________________________");
+        }
+        if (printAvgPrecisionForQuery) {
+            out.println("Avg precision by query");
+            for (int i = 0; i < avgPrecisionsByQuery.size(); i++) {                
+                out.printf("Query %d: %s\n", i, avgPrecisionsByQuery.get(i));
+            }
+            out.println("____________________________________");
+        }
+        if (printBprefAtRankForQuery) {
+            out.println("Bpref at rank by query");
+            for (Map.Entry<Integer, List<Double>> bprefAtRankByQuery : bprefAtRankByQuery.entrySet()) {
+                List<Double> queryBprefs = bprefAtRankByQuery.getValue();
+                out.printf("Bpref Rank %d\n", bprefAtRankByQuery.getKey());
+                for (int i = 0; i < queryBprefs.size(); i++) {
+                    out.printf("Query %d: %s\n", i, queryBprefs.get(i));
+                }
+            }
+        }
         out.flush();
     }
 
