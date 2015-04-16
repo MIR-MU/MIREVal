@@ -9,9 +9,7 @@ import java.io.File;
 public class App 
 {
     public static void main( String[] args) {
-        
-        System.out.println(args.length);
-        if (args.length != 2) {
+        if (args.length != 3) {
             System.exit(1);
         }
         
@@ -21,5 +19,9 @@ public class App
         Evaluation eval = new AdhocEvaluation(args[0]);
         eval.evaluate(args[1]);
         eval.writeEvaluationResult();
+        
+        String evalResultFile = args[2];
+        evalResultFile = evalResultFile.replace(".eval", "-queries.eval");
+        eval.writeEvaluationResultOfEachQuery(evalResultFile);
     }
 }

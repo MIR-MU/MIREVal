@@ -36,8 +36,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.List;
@@ -101,6 +102,8 @@ public class AdhocEvaluation extends Evaluation {
     protected List<Double> avgPrecisionsByQuery = new ArrayList<Double>();
     
     protected Map<Integer, List<Double>> bprefAtRankByQuery = new HashMap<Integer, List<Double>>();
+    
+    protected List<Map<Integer, Double>> relevantDocumentsAtRankByQuery = new ArrayList<Map<Integer, Double>>();
 
     /**
      * Create adhoc evaluation
@@ -138,7 +141,7 @@ public class AdhocEvaluation extends Evaluation {
     /**
      * The query number of each query.
      */
-    protected String[] queryNo;
+    protected List<String> queryNoList = new ArrayList<String>();
     
     /**
      * Initialise variables.
@@ -177,7 +180,6 @@ public class AdhocEvaluation extends Evaluation {
         List<Integer> numberOfRetrievedList = new ArrayList<Integer>();
         List<Integer> numberOfRelevantRetrievedList = new ArrayList<Integer>();
         List<Integer> numberOfNonRelevantRetrievedList = new ArrayList<Integer>();
-        List<String> queryNoList = new ArrayList<String>();
 
         /**
          * Read records from the result file
@@ -255,7 +257,6 @@ public class AdhocEvaluation extends Evaluation {
             numberOfRelevantRetrievedList.add(Integer.valueOf(numberOfRelevantRetrievedCounter));
             numberOfNonRelevantRetrievedList.add(Integer.valueOf(numberOfNonRelevantRetrievedCounter));
             br.close();
-            this.queryNo = queryNoList.toArray(new String[queryNoList.size()]);
             numberOfRelevantRetrieved = new int[effQueryCounter];
             numberOfRelevant = new int[effQueryCounter];
             numberOfRetrieved = new int[effQueryCounter];
@@ -280,6 +281,7 @@ public class AdhocEvaluation extends Evaluation {
         for (int i = 0; i < effQueryCounter; i++) {
             precisionAtRankByQuery.add(new HashMap<Integer,Double>());
             precisionAtRecallByQuery.add(new HashMap<Integer,Double>());
+            relevantDocumentsAtRankByQuery.add(new HashMap<Integer, Double>());
         }
 
         double[] ExactPrecision = new double[effQueryCounter];
@@ -294,8 +296,8 @@ public class AdhocEvaluation extends Evaluation {
         for (int i = 0; i < effQueryCounter; i++) {
             Record[] relevantRetrievedForQuery = (Record[]) listOfRelevantRetrieved.get(i);
             Record[] nonRelevantRetrievedForQuery = (Record[]) listOfNonRelevantRetrieved.get(i);
-            int relevantDocsCountForQuery = qrels.getRelevantDocuments(queryNo[i]).size();
-            int nonRelevantDocsCountForQuery = qrels.getNonRelevantDocuments(queryNo[i]).size();
+            int relevantDocsCountForQuery = qrels.getRelevantDocuments(queryNoList.get(i)).size();
+            int nonRelevantDocsCountForQuery = qrels.getNonRelevantDocuments(queryNoList.get(i)).size();
             for (int j = 0; j < relevantRetrievedForQuery.length; j++) {
                 if (relevantRetrievedForQuery[j].rank < numberOfRelevant[i]) {
                     RPrecision[i] += 1d;
@@ -303,6 +305,7 @@ public class AdhocEvaluation extends Evaluation {
                 for (int precisionRank : PRECISION_RANKS) {
                     if (relevantRetrievedForQuery[j].rank <= precisionRank) {
                         adjustOrPutValue(precisionAtRankByQuery.get(i), precisionRank, 1.0d, 1.0d);
+                        adjustOrPutValue(relevantDocumentsAtRankByQuery.get(i), precisionRank, 1.0d, 1.0d);
                     }
                 }
 
@@ -403,11 +406,20 @@ public class AdhocEvaluation extends Evaluation {
         try {
             final PrintWriter out = new PrintWriter(new FileWriter(resultEvalFilename));
             final StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < this.queryNo.length; i++) {
+            List<Double> bpref1000byQuery = bprefAtRankByQuery.get(1000);
+            Collections.sort(this.queryNoList, new NtcirQueryNoComparator());
+            sb.append("QUERYNO,MAP,BPREF,REL5,REL10\n");
+            for (int i = 0; i < this.queryNoList.size(); i++) {
                 sb.append(
-                        queryNo[i]
-                        + " "
+                        queryNoList.get(i)
+                        + ","
                         + round(this.avgPrecisionsByQuery.get(i), 4)
+                        + ","
+                        + round(bpref1000byQuery.get(i), 4)
+                        + ","
+                        + (relevantDocumentsAtRankByQuery.get(i).get(5) == null ? "0" : round(relevantDocumentsAtRankByQuery.get(i).get(5),0))
+                        + ","
+                        + (relevantDocumentsAtRankByQuery.get(i).get(10) == null ? "0" : round(relevantDocumentsAtRankByQuery.get(i).get(10),0))
                         + "\n");
             }
             out.print(sb.toString());
@@ -456,23 +468,23 @@ public class AdhocEvaluation extends Evaluation {
             }
             out.println("____________________________________");
         }
-        if (printAvgPrecisionForQuery) {
-            out.println("Avg precision by query");
-            for (int i = 0; i < avgPrecisionsByQuery.size(); i++) {                
-                out.printf("Query %d: %s\n", i, avgPrecisionsByQuery.get(i));
-            }
-            out.println("____________________________________");
-        }
-        if (printBprefAtRankForQuery) {
-            out.println("Bpref at rank by query");
-            for (Integer bprefRank : bprefAtRankByQuery.keySet()) {
-                List<Double> queryBprefs = bprefAtRankByQuery.get(bprefRank);
-                out.printf("Bpref Rank %d\n", bprefRank);
-                for (int i = 0; i < queryBprefs.size(); i++) {
-                    out.printf("Query %d: %s\n", i, queryBprefs.get(i));
-                }
-            }
-        }
+//        if (printAvgPrecisionForQuery) {
+//            out.println("Avg precision by query");
+//            for (int i = 0; i < avgPrecisionsByQuery.size(); i++) {                
+//                out.printf("Query %d: %s\n", i, round(avgPrecisionsByQuery.get(i), 4));
+//            }
+//            out.println("____________________________________");
+//        }
+//        if (printBprefAtRankForQuery) {
+//            out.println("Bpref at rank by query");
+//            for (Integer bprefRank : bprefAtRankByQuery.keySet()) {
+//                List<Double> queryBprefs = bprefAtRankByQuery.get(bprefRank);
+//                out.printf("Bpref Rank %d\n", bprefRank);
+//                for (int i = 0; i < queryBprefs.size(); i++) {
+//                    out.printf("Query %d: %s\n", i, round(queryBprefs.get(i), 4));
+//                }
+//            }
+//        }
         out.flush();
     }
 
@@ -491,17 +503,28 @@ public class AdhocEvaluation extends Evaluation {
         }
     }
     
-    public static double round(double value, int places) {
+    public static String round(double value, int places) {
         if (places < 0) {
             throw new IllegalArgumentException();
         }
 
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(places, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+        return bd.toPlainString();
     }
     
     private Double getValueOrZero(Double d) {
         return d == null ? 0 : d;
+    }
+    
+    public class NtcirQueryNoComparator implements Comparator<String> {
+
+        public int compare(String o1, String o2) {
+            int i1 = Integer.parseInt(o1);
+            int i2 = Integer.parseInt(o2);
+            
+            return i1 - i2;
+        }
+        
     }
 }
