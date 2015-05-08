@@ -1,6 +1,9 @@
 package cz.muni.fi.mireval;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Hello world!
@@ -23,5 +26,11 @@ public class App
         String evalResultFile = args[2];
         evalResultFile = evalResultFile.replace(".eval", "-queries.eval");
         eval.writeEvaluationResultOfEachQuery(evalResultFile);
+        
+        try {
+            QueriesPostProcessor.putInSingleFile();
+        } catch (IOException ex) {
+            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }
