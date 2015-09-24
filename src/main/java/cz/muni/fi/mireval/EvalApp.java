@@ -5,11 +5,7 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Hello world!
- *
- */
-public class App 
+public class EvalApp 
 {
     public static void main( String[] args) {
         if (args.length != 3) {
@@ -21,16 +17,16 @@ public class App
         
         Evaluation eval = new AdhocEvaluation(args[0]);
         eval.evaluate(args[1]);
-        eval.writeEvaluationResult();
+        eval.writeEvaluationResult(args[2]);
         
         String evalResultFile = args[2];
         evalResultFile = evalResultFile.replace(".eval", "-queries.eval");
         eval.writeEvaluationResultOfEachQuery(evalResultFile);
         
-        try {
-            QueriesPostProcessor.putInSingleFile();
-        } catch (IOException ex) {
-            Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            QueriesPostProcessor.putInSingleFile();
+//        } catch (IOException ex) {
+//            Logger.getLogger(EvalApp.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 }
