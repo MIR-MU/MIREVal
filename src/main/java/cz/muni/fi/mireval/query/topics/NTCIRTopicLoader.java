@@ -38,6 +38,7 @@ public class NTCIRTopicLoader implements TopicLoader {
     private static final String ANNOTATION_ELEMENT_NAME = "m:annotation";
     private static final String ANNOTATION_XML_ELEMENT_NAME = "m:annotation-xml";
     private static final String QVAR_ELEMENT_NAME = "mws:qvar";
+    private static final String ID_ATTR_NAME = "id";
     
     private static final String REPLACEMENT_IDENTIFIER_NAME = "identifier";
     private static final String REPLACEMENT_OPERATOR_NAME = "operator";
@@ -67,15 +68,15 @@ public class NTCIRTopicLoader implements TopicLoader {
                 Topic topic = new Topic();
                 topic.setTopicId(topicElement.getElementsByTagName(TOPIC_ID_ELEMENT_NAME).item(0).getTextContent());
                 NodeList formulaElements = topicElement.getElementsByTagName(FORMULA_ELEMENT_NAME);
-                List<String> formulaWords = new ArrayList<String>();
+                List<TopicTerm> formulaWords = new ArrayList<TopicTerm>();
                 for (int j = 0; j < formulaElements.getLength(); j++) {
                     formulaWords.add(transformFormulaQueryWord((Element)formulaElements.item(j)));
                 }
                 topic.setFormulaKeyword(formulaWords);
                 NodeList keywordElements = topicElement.getElementsByTagName(KEYWORD_ELEMENT_NAME);
-                List<String> keywords = new ArrayList<String>();
+                List<TopicTerm> keywords = new ArrayList<TopicTerm>();
                 for (int j = 0; j < keywordElements.getLength(); j++) {
-                    keywords.add(transformKeyword(keywordElements.item(j).getTextContent()));
+                    keywords.add(transformKeyword((Element)keywordElements.item(j)));
                 }
                 topic.setTextKeyword(keywords);
                 result.add(topic);
@@ -91,18 +92,26 @@ public class NTCIRTopicLoader implements TopicLoader {
         return result;
     }
 
-    private String transformFormulaQueryWord(Element element) {
+    private TopicTerm transformFormulaQueryWord(Element element) {
+        String formulaId = element.getParentNode().getAttributes().getNamedItem(ID_ATTR_NAME).getTextContent();
         transformElements(element);
         element = extractContentMathML(element);
         replaceQvars(element, ContentMML_tags);
-        return removeNamespacePrefix(nodeToString(element));
+        TopicTerm t = new TopicTerm();
+        t.setTerm(removeNamespacePrefix(nodeToString(element)));
+        t.setId(formulaId);
+        return t;
     }
 
-    private String transformKeyword(String word) {
+    private TopicTerm transformKeyword(Element element) {        
+        TopicTerm t = new TopicTerm();
+        String word = element.getTextContent();
         if (word.contains(" ")) {
             word = "\"" + word + "\"";
         }
-        return word;
+        t.setTerm(word);
+        t.setId(element.getAttributes().getNamedItem(ID_ATTR_NAME).getTextContent());
+        return t;
     }
     
     private String nodeToString(Node node) {

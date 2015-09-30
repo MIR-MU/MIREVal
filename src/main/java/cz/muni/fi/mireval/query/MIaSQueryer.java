@@ -2,6 +2,7 @@ package cz.muni.fi.mireval.query;
 
 import cz.muni.fi.mireval.Settings;
 import cz.muni.fi.mireval.query.topics.Topic;
+import cz.muni.fi.mireval.query.topics.TopicTerm;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,11 +40,11 @@ public class MIaSQueryer implements Queryer {
         StringBuilder topicLog = new StringBuilder();
         for (Topic topic : topics) {
             StringBuilder query = new StringBuilder();
-            for (String keyword : topic.getTextKeyword()) {
-                query.append(keyword).append(" ");
+            for (TopicTerm keyword : topic.getTextKeyword()) {
+                query.append(keyword.getTerm()).append(" ");
             }
-            for (String keyword : topic.getFormulaKeyword()) {
-                query.append(keyword).append(" ");
+            for (TopicTerm keyword : topic.getFormulaKeyword()) {
+                query.append(keyword.getTerm()).append(" ");
             }
             String queryString = query.toString();
             try {

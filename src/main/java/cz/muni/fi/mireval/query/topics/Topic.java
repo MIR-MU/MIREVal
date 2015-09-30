@@ -20,8 +20,8 @@ import java.util.List;
 public class Topic {
     
     private String topicId;
-    private List<String> formulaKeyword;
-    private List<String> textKeyword;
+    private List<TopicTerm> formulaKeyword;
+    private List<TopicTerm> textKeyword;
 
     public String getTopicId() {
         return topicId;
@@ -31,22 +31,20 @@ public class Topic {
         this.topicId = topicId;
     }
 
-    public List<String> getFormulaKeyword() {
+    public List<TopicTerm> getFormulaKeyword() {
         return formulaKeyword;
     }
 
-    public void setFormulaKeyword(List<String> formulaKeyword) {
+    public void setFormulaKeyword(List<TopicTerm> formulaKeyword) {
         this.formulaKeyword = formulaKeyword;
     }
 
-    public List<String> getTextKeyword() {
+    public List<TopicTerm> getTextKeyword() {
         return textKeyword;
     }
 
-    public void setTextKeyword(List<String> textKeyword) {
+    public void setTextKeyword(List<TopicTerm> textKeyword) {
         this.textKeyword = textKeyword;
     }
-    
-    
     
 }
