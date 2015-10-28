@@ -34,14 +34,14 @@ public class MIaSQueryer implements Queryer {
     private static final String RESULT_ID_ELEMENT_NAME = "id";
     private static final String RESULT_INFO_ELEMENT_NAME = "info";
     
-    public void performQueries(List<Topic> topics, String outputDir, String runName) {
+    public String performQueries(List<Topic> topics, String outputDir, String runName) {
         HttpURLConnection connection = null;
         StringBuilder fileOutput = new StringBuilder();        
         StringBuilder topicLog = new StringBuilder();
         for (Topic topic : topics) {
             StringBuilder query = new StringBuilder();
             for (TopicTerm keyword : topic.getTextKeyword()) {
-                query.append(keyword.getTerm()).append(" ");
+                query.append(keyword.getTerm()).append("^10 ");
             }
             for (TopicTerm keyword : topic.getFormulaKeyword()) {
                 query.append(keyword.getTerm()).append(" ");
@@ -89,8 +89,11 @@ public class MIaSQueryer implements Queryer {
                 Logger.getLogger(MIaSQueryer.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        writeToFile(outputDir + runName + ".tsv", fileOutput.toString());
+        String resultTsvFile = outputDir + runName + ".tsv";
+        writeToFile(resultTsvFile, fileOutput.toString());
         writeToFile(outputDir + runName + ".log", topicLog.toString());
+
+        return resultTsvFile;
     }
 
     private String transformResultId(String textContent) {

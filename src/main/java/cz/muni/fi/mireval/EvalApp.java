@@ -1,25 +1,21 @@
 package cz.muni.fi.mireval;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class EvalApp 
 {
     public static void main( String[] args) {
-        if (args.length != 3) {
+        if (args.length != 2) {
             System.exit(1);
         }
         
-        File qrels = new File(args[0]);
-        File results = new File(args[1]);
-        
-        Evaluation eval = new AdhocEvaluation(args[0]);
-        eval.evaluate(args[1]);
-        eval.writeEvaluationResult(args[2]);
-        
-        String evalResultFile = args[2];
+        Evaluation eval = new AdhocEvaluation(Settings.getQrelsFile());
+        eval.evaluate(args[0]);
+
+        String evalResultFile = args[1];
+
+        eval.writeEvaluationResult(evalResultFile);
+
         evalResultFile = evalResultFile.replace(".eval", "-queries.eval");
         eval.writeEvaluationResultOfEachQuery(evalResultFile);
         

@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class QueriesPostProcessor {
     
-    private static final String DIR = "d:\\skola\\mir\\SIGIR-2015\\evaluation\\";
+    private static final String DIR = "d:\\skola\\mir\\NTCIR-results-processing\\CIKM-2015\\evaluation\\";
     private static final String SEP = ";";
     
     private static class QueryResult {

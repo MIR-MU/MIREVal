@@ -4,7 +4,14 @@ import cz.muni.fi.mireval.query.topics.Topic;
 import java.util.List;
 
 public interface Queryer {
-    
-    public void performQueries(List<Topic> topics, String outputFile, String runName);
+
+    /**
+     *
+     * @param topics
+     * @param outputFile
+     * @param runName
+     * @return created tsv file
+     */
+    public String performQueries(List<Topic> topics, String outputFile, String runName);
     
 }

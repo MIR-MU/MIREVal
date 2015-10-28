@@ -44,6 +44,15 @@ public class Settings {
         }
         return result;
     }
+
+    public static String getQrelsFile() {
+        String result = config.getProperty("QRELS");
+        if (result == null || result.equals("")) {
+            System.out.println("Broken properties file.");
+            System.exit(2);
+        }
+        return result;
+    }
     
     public static String getOutputDir() {
         String result = config.getProperty("OUTPUT_DIR");
