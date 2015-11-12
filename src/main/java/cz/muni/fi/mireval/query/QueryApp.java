@@ -33,7 +33,6 @@ public class QueryApp {
         String date = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
         Queryer queryer = new MIaSQueryer();
         String tsvFile = queryer.performQueries(topics, Settings.getOutputDir(), args[0] + "_" + date);
-//        String tsvFile = "d:\\skola\\mir\\projects\\output\\MIRMU_CMath_2015-10-28T10-12-50.tsv";
 
         if (args.length > 1 && args[1].equals("-eval")) {
             EvalApp.main(new String[]{tsvFile, tsvFile.replace(".tsv", ".eval")});

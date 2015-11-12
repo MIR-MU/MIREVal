@@ -29,7 +29,6 @@ import java.util.Map;
  */
 public class QueriesPostProcessor {
     
-    private static final String DIR = "d:\\skola\\mir\\NTCIR-results-processing\\CIKM-2015\\evaluation\\";
     private static final String SEP = ";";
     
     private static class QueryResult {
@@ -56,7 +55,7 @@ public class QueriesPostProcessor {
     }
     
     public static void putInSingleFile() throws FileNotFoundException, IOException {
-        File dir = new File(DIR);
+        File dir = new File(Settings.getOutputDir());
         List<FileQueryResult> fqrs = new ArrayList<FileQueryResult>();
         for (File f : dir.listFiles()) {
             if (f.getName().contains("tsv-queries")) {
@@ -119,7 +118,7 @@ public class QueriesPostProcessor {
             result.append(formatter.format(sum).replaceAll(",", "."));
         }
 //        System.out.println(result.toString());
-        FileWriter fw = new FileWriter(DIR+"/all-strategies-queries-"+metric+".csv");
+        FileWriter fw = new FileWriter(Settings.getOutputDir()+"/all-strategies-queries-"+metric+".csv");
         fw.write(result.toString());
         fw.close();
     }

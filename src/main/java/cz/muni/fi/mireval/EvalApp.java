@@ -1,7 +1,5 @@
 package cz.muni.fi.mireval;
 
-import java.io.File;
-
 public class EvalApp 
 {
     public static void main( String[] args) {
