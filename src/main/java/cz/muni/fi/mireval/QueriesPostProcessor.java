@@ -54,11 +54,18 @@ public class QueriesPostProcessor {
         }
     }
     
-    public static void putInSingleFile() throws FileNotFoundException, IOException {
-        File dir = new File(Settings.getOutputDir());
+    private static class FileEvalResult {        
+        public String fileName;
+        public double bpref;
+        public double map;
+    }
+    
+    public static void putInSingleFile(String outputDir) throws FileNotFoundException, IOException {
+        File dir = new File(outputDir);
         List<FileQueryResult> fqrs = new ArrayList<FileQueryResult>();
+        List<FileEvalResult> fers = new ArrayList<FileEvalResult>();
         for (File f : dir.listFiles()) {
-            if (f.getName().contains("tsv-queries")) {
+            if (f.getName().contains("-queries.eval")) {
                 FileQueryResult fqr = new FileQueryResult();
                 fqr.fileName = f.getName();
                 BufferedReader br = new BufferedReader(new FileReader(f));
@@ -73,14 +80,30 @@ public class QueriesPostProcessor {
                 }
                 fqrs.add(fqr);
                 br.close();
+            } else if (f.getName().contains(".eval")) {
+                FileEvalResult fer = new FileEvalResult();
+                fer.fileName = f.getName();
+                BufferedReader br = new BufferedReader(new FileReader(f));
+                String line = br.readLine();
+                while ((line = br.readLine()) != null) {
+                    if (line.contains("MAP:")) {
+                        String[] split = line.split(" ");
+                        fer.map = Double.valueOf(split[split.length-1]);
+                     } else if (line.contains("Bpref") && line.contains("1000")) {
+                        String[] split = line.split(" ");
+                        fer.bpref = Double.valueOf(split[split.length-1]);
+                    }
+                }
+                fers.add(fer);
             }
         }
         
-        printMetricsToFile(fqrs, "MAP");
-        printMetricsToFile(fqrs, "BPREF");
+        printMetricsToFile(fqrs, "MAP", outputDir);
+        printMetricsToFile(fqrs, "BPREF", outputDir);
+        printEvalsToFile(fers, outputDir);
     }
     
-    private static void printMetricsToFile(List<FileQueryResult> fqrs, String metric) throws IOException {
+    private static void printMetricsToFile(List<FileQueryResult> fqrs, String metric, String outputDir) throws IOException {
         DecimalFormat formatter = new DecimalFormat("#.####");
         StringBuilder result = new StringBuilder();
         result.append("queryNo");
@@ -117,8 +140,8 @@ public class QueriesPostProcessor {
             sum = sum/fqrs.get(i).queryResults.size();
             result.append(formatter.format(sum).replaceAll(",", "."));
         }
-//        System.out.println(result.toString());
-        FileWriter fw = new FileWriter(Settings.getOutputDir()+"/all-strategies-queries-"+metric+".csv");
+        
+        FileWriter fw = new FileWriter(outputDir+"/all-runs-queries-"+metric+".csv");
         fw.write(result.toString());
         fw.close();
     }
@@ -147,5 +170,25 @@ public class QueriesPostProcessor {
     }
     
     
+    private static void printEvalsToFile(List<FileEvalResult> fers, String outputDir) throws IOException {
+        StringBuilder result = new StringBuilder();
+        result.append("metric");
+        for (FileEvalResult fer : fers) {
+            result.append(SEP).append(getStrategyName(fer.fileName));
+        }        
+        result.append("\n");
+        result.append("MAP");
+        for (FileEvalResult fer : fers) {
+            result.append(SEP).append(fer.map);
+        }
+        result.append("\n");
+        result.append("BPREF");
+        for (FileEvalResult fer : fers) {
+            result.append(SEP).append(fer.bpref);
+        }        
+        FileWriter fw = new FileWriter(outputDir+"/all-runs-eval.csv");
+        fw.write(result.toString());
+        fw.close();
+    }
     
 }

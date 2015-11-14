@@ -1,6 +1,5 @@
 package cz.muni.fi.mireval.query;
 
-import cz.muni.fi.mireval.Settings;
 import cz.muni.fi.mireval.query.topics.Topic;
 import cz.muni.fi.mireval.query.topics.TopicTerm;
 import java.io.BufferedWriter;
@@ -34,6 +33,12 @@ public class MIaSQueryer implements Queryer {
     private static final String RESULT_ID_ELEMENT_NAME = "id";
     private static final String RESULT_INFO_ELEMENT_NAME = "info";
     
+    private String queryUrl;
+
+    public MIaSQueryer(String queryUrl) {
+        this.queryUrl = queryUrl;
+    }
+    
     public String performQueries(List<Topic> topics, String outputDir, String runName) {
         HttpURLConnection connection = null;
         StringBuilder fileOutput = new StringBuilder();        
@@ -52,7 +57,7 @@ public class MIaSQueryer implements Queryer {
             } catch (UnsupportedEncodingException ex) {
                 LOG.log(Level.SEVERE, null, ex);
             }
-            String serviceUrl = Settings.getQueryingUrl()+URL_TEMPLATE.replace("{query}", queryString);
+            String serviceUrl = queryUrl+URL_TEMPLATE.replace("{query}", queryString);
             try {
                 LOG.log(Level.INFO, "Topic {0}", topic.getTopicId());
                 topicLog.append("Topic ").append(topic.getTopicId()).append("\n");

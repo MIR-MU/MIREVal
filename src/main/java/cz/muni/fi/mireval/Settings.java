@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 /**
  * Settings class responsible for loading settings from mias.properties Property file.
@@ -15,51 +17,67 @@ import java.util.logging.Logger;
 public class Settings {
     
     public static final String MATHML_NAMESPACE_URI = "http://www.w3.org/1998/Math/MathML";
+    
+    public static final String OPTION_QUERYURL = "queryurl";
+    public static final String OPTION_RUNNAME = "runname";
+    public static final String OPTION_TOPICS = "topics";
+    public static final String OPTION_OUTPUTDIR = "outputdir";
+    
+    public static final String OPTION_QRELS = "qrels";    
+    public static final String OPTION_TSV_FILE = "tsvfile";
+    public static final String OPTION_EVAL_OUTPUT = "outputfile";
 
-    private static Properties config;
-
-    static {
-        config = new Properties();
-        try {
-            config.load(Settings.class.getResourceAsStream("mireval.properties"));
-        } catch (IOException ex) {
-            Logger.getLogger(Settings.class.getName()).log(Level.WARNING, "Cannot load properties file");
-        }
+    public static Options getQueryAppOptions() {
+        Options options = new Options();
+        options.addOption(Option.builder(OPTION_QUERYURL)
+            .required(true)
+            .hasArg()
+            .desc("URL for querying topics.")
+            .build());
+        options.addOption(Option.builder(OPTION_TOPICS)
+            .required(true)
+            .hasArg()
+            .desc("Path to topics file.")
+            .build());
+        options.addOption(Option.builder(OPTION_OUTPUTDIR)
+            .required(true)
+            .hasArg()
+            .desc("Output directory.")
+            .build());
+        options.addOption(Option.builder(OPTION_RUNNAME)
+            .required(true)
+            .hasArg()
+            .desc("Run name.")
+            .build());
+        options.addOption(Option.builder(OPTION_QRELS)
+            .hasArg()
+            .desc("Path to qrels file.")
+            .build());
+        return options;        
     }
     
-    public static String getQueryingUrl() {
-        String result = config.getProperty("URL");
-        if (result == null || result.equals("")) {
-            System.out.println("Broken properties file.");
-            System.exit(2);
-        }
-        return result;
-    }
-    
-    public static String getTopicsFile() {
-        String result = config.getProperty("TOPICS");
-        if (result == null || result.equals("")) {
-            System.out.println("Broken properties file.");
-            System.exit(2);
-        }
-        return result;
-    }
-
-    public static String getQrelsFile() {
-        String result = config.getProperty("QRELS");
-        if (result == null || result.equals("")) {
-            System.out.println("Broken properties file.");
-            System.exit(2);
-        }
-        return result;
-    }
-    
-    public static String getOutputDir() {
-        String result = config.getProperty("OUTPUT_DIR");
-        if (result == null || result.equals("")) {
-            System.out.println("Broken properties file.");
-            System.exit(2);
-        }
-        return result;
+    public static Options getEvalAppOptions() {
+        Options options = new Options();
+        options.addOption(Option.builder(OPTION_OUTPUTDIR)
+            .required(true)
+            .hasArg()
+            .desc("Output directory.")
+            .build());
+        options.addOption(Option.builder(OPTION_QRELS)
+            .required(true)
+            .hasArg()
+            .desc("Path to qrels file.")
+            .build());
+        options.addOption(Option.builder(OPTION_TSV_FILE)
+            .required(true)
+            .hasArg()
+            .desc("Path to tsv input file to be evaluated.")
+            .build());
+        options.addOption(Option.builder(OPTION_EVAL_OUTPUT)
+            .required(true)
+            .hasArg()
+            .desc("Path to output file with evaluation.")
+            .build());
+        return options;        
     }
 }
