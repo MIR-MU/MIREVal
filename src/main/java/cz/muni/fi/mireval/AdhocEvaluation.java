@@ -58,7 +58,7 @@ public class AdhocEvaluation extends Evaluation {
 
     protected static final int[] PRECISION_RANKS = new int[]{1, 2, 3, 4, 5, 10};
     protected static final int[] PRECISION_PERCENTAGES = new int[]{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-    protected static final int[] BPREF_RANKS = new int[]{20, 50, 100, 1000};
+    protected static final int[] BPREF_RANKS = new int[]{10, 20, 50, 100, 1000};
     
     private static final boolean printRprecision = false;
     private static final boolean printMAP = true;
