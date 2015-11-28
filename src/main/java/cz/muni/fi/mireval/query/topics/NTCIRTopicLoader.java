@@ -107,7 +107,7 @@ public class NTCIRTopicLoader implements TopicLoader {
         TopicTerm t = new TopicTerm();
         String word = element.getTextContent();
         if (word.contains(" ")) {
-            word = "\"" + word + "\"" + word;
+            word = "\"" + word + "\"";
         }
         t.setTerm(word);
         t.setId(element.getAttributes().getNamedItem(ID_ATTR_NAME).getTextContent());

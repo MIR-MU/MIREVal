@@ -49,7 +49,7 @@ public class QueryApp {
             
             String date = new SimpleDateFormat("yyyy-MM-dd'T'HH-mm-ss").format(new Date());
             Queryer queryer = new MIaSQueryer(cmd.getOptionValue(Settings.OPTION_QUERYURL));
-            String tsvFile = queryer.performQueries(topics, cmd.getOptionValue(OPTION_OUTPUTDIR), cmd.getOptionValue(OPTION_RUNNAME) + "_" + date);
+            String tsvFile = queryer.performQueries(topics, cmd.getOptionValue(OPTION_OUTPUTDIR), date + "_" + cmd.getOptionValue(OPTION_RUNNAME));
             
             if (cmd.hasOption(Settings.OPTION_QRELS)) {
                 EvalApp.main(new String[]{"-"+Settings.OPTION_TSV_FILE, tsvFile, "-"+Settings.OPTION_EVAL_OUTPUT, tsvFile.replace(".tsv", ".eval"), "-"+Settings.OPTION_OUTPUTDIR, cmd.getOptionValue(OPTION_OUTPUTDIR), "-"+Settings.OPTION_QRELS, cmd.getOptionValue(Settings.OPTION_QRELS)});

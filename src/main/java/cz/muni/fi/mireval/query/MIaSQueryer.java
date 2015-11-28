@@ -46,7 +46,7 @@ public class MIaSQueryer implements Queryer {
         for (Topic topic : topics) {
             StringBuilder query = new StringBuilder();
             for (TopicTerm keyword : topic.getTextKeyword()) {
-                query.append(keyword.getTerm()).append("^10 ");
+                query.append(keyword.getTerm()).append(" ");
             }
             for (TopicTerm keyword : topic.getFormulaKeyword()) {
                 query.append(keyword.getTerm()).append(" ");
