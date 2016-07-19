@@ -429,7 +429,7 @@ public class QrelsInMemory {
 
                 stk.nextToken();
                 String docno = stk.nextToken();
-                int relGrade = Integer.parseInt(stk.nextToken());
+                int relGrade = Math.round(Float.parseFloat(stk.nextToken()));
                 boolean relevant = (relGrade > 0);
                 if (!queryid.equals(preQueryid)) {
                     if (preQueryid.equals("1st")) {
