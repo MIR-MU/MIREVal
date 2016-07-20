@@ -41,8 +41,7 @@ public class QueriesPostProcessor {
     private static class QueryResult {
 
         public int queryno;
-        public double map;
-        public double bpref;
+        public Map<String, Double> metrics = new HashMap<>();
 
     }
 
@@ -76,6 +75,7 @@ public class QueriesPostProcessor {
         public SortedMap<Integer, Double> bpref = new TreeMap<>();
         public double map;
         public SortedMap<Integer, Double> precision = new TreeMap<>();
+
     }
 
     public static void putInSingleFile(String outputDir) throws FileNotFoundException, IOException {
@@ -83,18 +83,23 @@ public class QueriesPostProcessor {
         List<FileQueryResult> fqrs = new ArrayList<FileQueryResult>();
         List<FileEvalResult> fers = new ArrayList<FileEvalResult>();
         Pattern metricAtPattern = Pattern.compile("^(.*?)\\s+at\\s+(\\d+)\\s+:\\s+(\\d+(\\.\\d+)?)$");
+
+        Set<String> metrics = new HashSet<>();
         for (File f : dir.listFiles()) {
             if (f.getName().contains("-queries.eval")) {
                 FileQueryResult fqr = new FileQueryResult();
                 fqr.fileName = f.getName();
                 BufferedReader br = new BufferedReader(new FileReader(f));
                 String line = br.readLine();
+                String[] head = line.split(",");
                 while ((line = br.readLine()) != null) {
                     String[] split = line.split(",");
                     QueryResult qr = new QueryResult();
                     qr.queryno = Integer.parseInt(split[0]);
-                    qr.map = Double.parseDouble(split[1]);
-                    qr.bpref = Double.parseDouble(split[2]);
+                    for (int fld = 1; fld < split.length; fld++) {
+                        qr.metrics.put(head[fld], Double.parseDouble(split[fld]));
+                        metrics.add(head[fld]);
+                    }
                     fqr.queryResults.add(qr);
                 }
                 fqrs.add(fqr);
@@ -128,8 +133,9 @@ public class QueriesPostProcessor {
             }
         }
 
-        printMetricsToFile(fqrs, "MAP", outputDir);
-        printMetricsToFile(fqrs, "BPREF", outputDir);
+        for (String metric : metrics) {
+            printMetricsToFile(fqrs, metric, outputDir);
+        }
         printEvalsToFile(fers, outputDir);
     }
 
@@ -153,16 +159,8 @@ public class QueriesPostProcessor {
                 QueryResult queryResultForQuery = fqr.getQueryResultForQuery(i);
                 result.append(SEP);
                 if (queryResultForQuery != null) {
-                    if (metric.equals("MAP")) {
-//                      result.append(formatter.format(queryResultForQuery.map));
-                        result.append(queryResultForQuery.map);
-                        addToAvgList(avgs, j, queryResultForQuery.map);
-                    }
-                    if (metric.equals("BPREF")) {
-//                      result.append(formatter.format(queryResultForQuery.bpref));
-                        result.append(queryResultForQuery.bpref);
-                        addToAvgList(avgs, j, queryResultForQuery.bpref);
-                    }
+                    result.append(queryResultForQuery.metrics.get(metric));
+                    addToAvgList(avgs, j, queryResultForQuery.metrics.get(metric));
                 }
             }
             result.append("\n");
