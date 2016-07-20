@@ -8,7 +8,6 @@
  * 
  * ===========================================================================
  */
-
 package cz.muni.fi.mireval;
 
 import java.io.BufferedReader;
@@ -22,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,22 +31,22 @@ import java.util.regex.Pattern;
  * @author Martin Liska <martin.liska@ibacz.eu>
  */
 public class QueriesPostProcessor {
-    
+
     private static final String SEP = ";";
-    
+
     private static class QueryResult {
-        
+
         public int queryno;
         public double map;
         public double bpref;
-    
+
     }
-    
+
     private static class FileQueryResult {
-        
+
         public String fileName;
         public List<QueryResult> queryResults = new ArrayList<QueryResult>();
-        
+
         public QueryResult getQueryResultForQuery(int queryNo) {
             for (QueryResult qe : queryResults) {
                 if (qe.queryno == queryNo) {
@@ -55,14 +56,15 @@ public class QueriesPostProcessor {
             return null;
         }
     }
-    
-    private static class FileEvalResult {        
+
+    private static class FileEvalResult {
+
         public String fileName;
-        public double bpref;
+        public SortedMap<Integer, Double> bpref = new TreeMap<>();
         public double map;
-        public Map<Integer, Double> precision = new HashMap<>();
+        public SortedMap<Integer, Double> precision = new TreeMap<>();
     }
-    
+
     public static void putInSingleFile(String outputDir) throws FileNotFoundException, IOException {
         File dir = new File(outputDir);
         List<FileQueryResult> fqrs = new ArrayList<FileQueryResult>();
@@ -93,9 +95,13 @@ public class QueriesPostProcessor {
                     if (line.contains("MAP:")) {
                         String[] split = line.split(" ");
                         fer.map = Double.valueOf(split[split.length - 1]);
-                    } else if (line.contains("Bpref") && line.contains("1000")) {
-                        String[] split = line.split(" ");
-                        fer.bpref = Double.valueOf(split[split.length - 1]);
+                    } else if (line.contains("Bpref")) {
+                        Matcher metricAtMatcher = metricAtPattern.matcher(line);
+                        if (metricAtMatcher.find()) {
+                            int at = Integer.valueOf(metricAtMatcher.group(2));
+                            double value = Double.valueOf(metricAtMatcher.group(3));
+                            fer.bpref.put(at, value);
+                        }
                     } else if (line.contains("Precision")) {
                         Matcher metricAtMatcher = metricAtPattern.matcher(line);
                         if (metricAtMatcher.find()) {
@@ -108,12 +114,12 @@ public class QueriesPostProcessor {
                 fers.add(fer);
             }
         }
-        
+
         printMetricsToFile(fqrs, "MAP", outputDir);
         printMetricsToFile(fqrs, "BPREF", outputDir);
         printEvalsToFile(fers, outputDir);
     }
-    
+
     private static void printMetricsToFile(List<FileQueryResult> fqrs, String metric, String outputDir) throws IOException {
         DecimalFormat formatter = new DecimalFormat("#.####");
         StringBuilder result = new StringBuilder();
@@ -147,16 +153,16 @@ public class QueriesPostProcessor {
         result.append("avg");
         for (int i = 0; i < avgs.size(); i++) {
             result.append(SEP);
-            Double sum = avgs.get(i);            
-            sum = sum/fqrs.get(i).queryResults.size();
+            Double sum = avgs.get(i);
+            sum = sum / fqrs.get(i).queryResults.size();
             result.append(formatter.format(sum).replaceAll(",", "."));
         }
-        
-        FileWriter fw = new FileWriter(outputDir+"/all-runs-queries-"+metric+".csv");
+
+        FileWriter fw = new FileWriter(outputDir + "/all-runs-queries-" + metric + ".csv");
         fw.write(result.toString());
         fw.close();
     }
-    
+
     private static String getStrategyName(String fileName) {
         String result = fileName.substring(fileName.indexOf("MIRMU_") + 6, fileName.length());
         String[] fileSplit = result.split("\\.");
@@ -170,7 +176,7 @@ public class QueriesPostProcessor {
         result = result.replaceAll("ath", "");
         return result;
     }
-    
+
     private static void addToAvgList(Map<Integer, Double> map, int position, double value) {
         Double d = map.get(position);
         if (d == null) {
@@ -179,36 +185,37 @@ public class QueriesPostProcessor {
         d = d + value;
         map.put(position, d);
     }
-    
-    
+
     private static void printEvalsToFile(List<FileEvalResult> fers, String outputDir) throws IOException {
         StringBuilder result = new StringBuilder();
         result.append("metric");
         for (FileEvalResult fer : fers) {
             result.append(SEP).append(getStrategyName(fer.fileName));
-        }        
+        }
         result.append("\n");
         result.append("MAP");
         for (FileEvalResult fer : fers) {
             result.append(SEP).append(fer.map);
         }
-        result.append("\n");
-        result.append("BPREF");
-        for (FileEvalResult fer : fers) {
-            result.append(SEP).append(fer.bpref);
-        }
         if (!fers.isEmpty()) {
+            for (int at : fers.get(0).bpref.keySet()) {
+                result.append("\n");
+                result.append("BPREF").append(at);
+                for (FileEvalResult fer : fers) {
+                    result.append(SEP).append(fer.bpref.get(at));
+                }
+            }
             for (int at : fers.get(0).precision.keySet()) {
                 result.append("\n");
-                result.append("Precision").append(at);
+                result.append("PRECISION").append(at);
                 for (FileEvalResult fer : fers) {
                     result.append(SEP).append(fer.precision.get(at));
                 }
             }
         }
-        FileWriter fw = new FileWriter(outputDir+"/all-runs-eval.csv");
+        FileWriter fw = new FileWriter(outputDir + "/all-runs-eval.csv");
         fw.write(result.toString());
         fw.close();
     }
-    
+
 }
