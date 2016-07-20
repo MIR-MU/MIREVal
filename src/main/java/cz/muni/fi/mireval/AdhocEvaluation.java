@@ -58,7 +58,7 @@ public class AdhocEvaluation extends Evaluation {
 
     protected static final Logger logger = Logger.getLogger(AdhocEvaluation.class);
 
-    protected static final int[] PRECISION_RANKS = new int[]{1, 2, 3, 4, 5, 10};
+    protected static final int[] PRECISION_RANKS = new int[]{1, 2, 3, 4, 5, 10, 15, 20};
     protected static final int[] PRECISION_PERCENTAGES = new int[]{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
     protected static final int[] BPREF_RANKS = new int[]{10, 20, 50, 100, 1000};
 
@@ -422,7 +422,14 @@ public class AdhocEvaluation extends Evaluation {
             for (int at : bprefRanks) {
                 sb.append(",BPREF").append(at);
             }
-            sb.append(",REL5,REL10\n");
+            SortedSet<Integer> relRanks = new TreeSet<>();
+            for (Map<Integer, Double> relDoc : relevantDocumentsAtRankByQuery) {
+                relRanks.addAll(relDoc.keySet());
+            }
+            for (int at : relRanks) {
+                sb.append(",REL").append(at);
+            }
+            sb.append("\n");
             for (int i = 0; i < this.queryNoList.size(); i++) {
                 sb.append(queryNoList.get(i))
                         .append(",")
@@ -431,11 +438,13 @@ public class AdhocEvaluation extends Evaluation {
                     sb.append(",")
                             .append(round(bprefAtRankByQuery.get(at).get(i), 4));
                 }
-                sb.append(",")
-                        .append(relevantDocumentsAtRankByQuery.get(i).get(5) == null ? "0" : round(relevantDocumentsAtRankByQuery.get(i).get(5), 0))
-                        .append(",")
-                        .append(relevantDocumentsAtRankByQuery.get(i).get(10) == null ? "0" : round(relevantDocumentsAtRankByQuery.get(i).get(10), 0))
-                        .append("\n");
+                for (int at : relRanks) {
+                    sb.append(",")
+                            .append(relevantDocumentsAtRankByQuery.get(i).get(at) == null
+                                            ? "0"
+                                            : round(relevantDocumentsAtRankByQuery.get(i).get(at), 0));
+                }
+                sb.append("\n");
             }
             out.print(sb.toString());
             out.close();
