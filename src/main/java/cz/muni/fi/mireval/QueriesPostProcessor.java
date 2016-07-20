@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -58,12 +60,14 @@ public class QueriesPostProcessor {
         public String fileName;
         public double bpref;
         public double map;
+        public Map<Integer, Double> precision = new HashMap<>();
     }
     
     public static void putInSingleFile(String outputDir) throws FileNotFoundException, IOException {
         File dir = new File(outputDir);
         List<FileQueryResult> fqrs = new ArrayList<FileQueryResult>();
         List<FileEvalResult> fers = new ArrayList<FileEvalResult>();
+        Pattern metricAtPattern = Pattern.compile("^(.*?)\\s+at\\s+(\\d+)\\s+:\\s+(\\d+(\\.\\d+)?)$");
         for (File f : dir.listFiles()) {
             if (f.getName().contains("-queries.eval")) {
                 FileQueryResult fqr = new FileQueryResult();
@@ -88,10 +92,17 @@ public class QueriesPostProcessor {
                 while ((line = br.readLine()) != null) {
                     if (line.contains("MAP:")) {
                         String[] split = line.split(" ");
-                        fer.map = Double.valueOf(split[split.length-1]);
-                     } else if (line.contains("Bpref") && line.contains("1000")) {
+                        fer.map = Double.valueOf(split[split.length - 1]);
+                    } else if (line.contains("Bpref") && line.contains("1000")) {
                         String[] split = line.split(" ");
-                        fer.bpref = Double.valueOf(split[split.length-1]);
+                        fer.bpref = Double.valueOf(split[split.length - 1]);
+                    } else if (line.contains("Precision")) {
+                        Matcher metricAtMatcher = metricAtPattern.matcher(line);
+                        if (metricAtMatcher.find()) {
+                            int at = Integer.valueOf(metricAtMatcher.group(2));
+                            double value = Double.valueOf(metricAtMatcher.group(3));
+                            fer.precision.put(at, value);
+                        }
                     }
                 }
                 fers.add(fer);
@@ -185,7 +196,16 @@ public class QueriesPostProcessor {
         result.append("BPREF");
         for (FileEvalResult fer : fers) {
             result.append(SEP).append(fer.bpref);
-        }        
+        }
+        if (!fers.isEmpty()) {
+            for (int at : fers.get(0).precision.keySet()) {
+                result.append("\n");
+                result.append("Precision").append(at);
+                for (FileEvalResult fer : fers) {
+                    result.append(SEP).append(fer.precision.get(at));
+                }
+            }
+        }
         FileWriter fw = new FileWriter(outputDir+"/all-runs-eval.csv");
         fw.write(result.toString());
         fw.close();
