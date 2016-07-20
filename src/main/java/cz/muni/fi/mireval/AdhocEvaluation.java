@@ -341,6 +341,15 @@ public class AdhocEvaluation extends Evaluation {
                     }
                 }
                 double queryBprefAtRank = rSum / relevantDocsCountForQuery;
+                // queryBprefAtRank is NaN if relevantDocsCountForQuery was 0
+                if (Double.isNaN(queryBprefAtRank)) {
+                    logger.warn("result file '" + resultFilename + "' – "
+                            + "queryBprefAtRank is not a number for rank " + bprefRank + " – "
+                            + "queryBprefAtRank = rSum / relevantDocsCountForQuery: "
+                            + queryBprefAtRank + " = " + rSum + " / " + relevantDocsCountForQuery
+                            + " – setting queryBprefAtRank to 0.");
+                    queryBprefAtRank = 0.0d;
+                }
                 adjustOrPutValue(bprefAtRank, bprefRank, queryBprefAtRank, queryBprefAtRank);
                 bprefsAtRank.add(queryBprefAtRank);
             }
