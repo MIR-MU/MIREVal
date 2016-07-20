@@ -19,10 +19,14 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,6 +59,15 @@ public class QueriesPostProcessor {
             }
             return null;
         }
+
+        public Set<Integer> getQueryNos() {
+            Set<Integer> queryNos = new HashSet<>();
+            for (QueryResult qe : queryResults) {
+                queryNos.add(qe.queryno);
+            }
+            return queryNos;
+        }
+
     }
 
     private static class FileEvalResult {
@@ -129,7 +142,11 @@ public class QueriesPostProcessor {
         }
         Map<Integer, Double> avgs = new HashMap<Integer, Double>();
         result.append("\n");
-        for (int i = 1; i <= 50; i++) {
+        SortedSet<Integer> queryNos = new TreeSet<>();
+        for (FileQueryResult fqr : fqrs) {
+            queryNos.addAll(fqr.getQueryNos());
+        }
+        for (Integer i : queryNos) {
             result.append(i);
             for (int j = 0; j < fqrs.size(); j++) {
                 FileQueryResult fqr = fqrs.get(j);
@@ -137,12 +154,12 @@ public class QueriesPostProcessor {
                 result.append(SEP);
                 if (queryResultForQuery != null) {
                     if (metric.equals("MAP")) {
-//                        result.append(formatter.format(queryResultForQuery.map));
+//                      result.append(formatter.format(queryResultForQuery.map));
                         result.append(queryResultForQuery.map);
                         addToAvgList(avgs, j, queryResultForQuery.map);
                     }
                     if (metric.equals("BPREF")) {
-//                        result.append(formatter.format(queryResultForQuery.bpref));
+//                      result.append(formatter.format(queryResultForQuery.bpref));
                         result.append(queryResultForQuery.bpref);
                         addToAvgList(avgs, j, queryResultForQuery.bpref);
                     }
