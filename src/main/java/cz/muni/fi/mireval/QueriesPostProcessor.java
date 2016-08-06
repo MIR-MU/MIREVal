@@ -27,6 +27,8 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +37,8 @@ import java.util.regex.Pattern;
  * @author Martin Liska <martin.liska@ibacz.eu>
  */
 public class QueriesPostProcessor {
+
+    protected static final Logger logger = Logger.getLogger(QueriesPostProcessor.class.getName());
 
     private static final String SEP = ";";
 
@@ -159,8 +163,17 @@ public class QueriesPostProcessor {
                 QueryResult queryResultForQuery = fqr.getQueryResultForQuery(i);
                 result.append(SEP);
                 if (queryResultForQuery != null) {
-                    result.append(queryResultForQuery.metrics.get(metric));
-                    addToAvgList(avgs, j, queryResultForQuery.metrics.get(metric));
+                    double metricResult;
+                    try {
+                        metricResult = queryResultForQuery.metrics.get(metric);
+                    } catch (NullPointerException e) {
+                        logger.log(Level.WARNING,
+                                "Setting metricResult = 0.0 as got null result for metric ''{0}'', j ''{1}'', avgs ''{2}''",
+                                new Object[]{metric, j, avgs});
+                        metricResult = 0.0d;
+                    }
+                    result.append(metricResult);
+                    addToAvgList(avgs, j, metricResult);
                 }
             }
             result.append("\n");
