@@ -320,6 +320,22 @@ public class AdhocEvaluation extends Evaluation {
                         = (double) (j + 1) / numberOfRelevant[i];
             }
 
+            /*
+             Bpref evaluation
+
+             bpref = \frac{1}{R} \sum_r{\left(1 - \frac{number\ of\ n\ above\ r}{R}\right)}
+
+             See: https://dx.doi.org/10.1145/1008992.1009000
+
+             Actually using trac_eval implementation variant (see: http://icb.med.cornell.edu/wiki/index.php/BPrefTrecEval2006)
+
+             bpref = \frac{1}{R} \sum_r{\left(1 - \frac{min(number\ of\ n\ above\ r, R)}{min(N, R)}\right)}
+
+             but further modified to work correctly on result lists with lower number of results (Bref@x) than the number of
+             known relevant results in ground truth (R):
+
+             bpref = \frac{1}{min(R, x)} \sum_r{\left(1 - \frac{min(number\ of\ n\ above\ r, R)}{min(N, R)}\right)}
+             */
             for (int bprefRank : BPREF_RANKS) {
                 double rSum = 0d;
                 List<Double> bprefsAtRank = bprefAtRankByQuery.get(bprefRank);
@@ -342,7 +358,7 @@ public class AdhocEvaluation extends Evaluation {
                         rSum += n;
                     }
                 }
-                double queryBprefAtRank = rSum / relevantDocsCountForQuery;
+                double queryBprefAtRank = rSum / Math.min(relevantDocsCountForQuery, bprefRank);
                 // queryBprefAtRank is NaN if relevantDocsCountForQuery was 0
                 if (Double.isNaN(queryBprefAtRank)) {
                     logger.warn("result file '" + resultFilename + "' – "
