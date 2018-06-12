@@ -1,14 +1,3 @@
-/*
- * ===========================================================================
- *  IBA CZ Confidential
- * 
- *  (c) Copyright IBA CZ 2014 ALL RIGHTS RESERVED
- *  The source code for this program is not published or otherwise
- *  divested of its trade secrets.
- * 
- * ===========================================================================
- */
-
 package cz.muni.fi.mireval.query;
 
 import cz.muni.fi.mireval.EvalApp;
