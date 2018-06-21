@@ -6,8 +6,8 @@ MIREVal – Evaluates [MIaS][] results
 
 MIREval takes final result lists produced by the [NTCIR MIaS
 Search][ntcir-mias-search] package, compares them with relevance judgements in
-the [`trec_eval`][] format, and produces the following ranked retrieval
-evaluation metrics:
+the [`trec_eval`][trec_eval] format, and produces the following ranked
+retrieval evaluation metrics:
 
 - Bpref at 10, 20, 50, 100, and 1000
 - Mean Average Presision
