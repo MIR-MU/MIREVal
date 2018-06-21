@@ -1,8 +1,8 @@
 MIREVal – Evaluates [MIaS][] results
 ====================================
-[![CircleCI](https://circleci.com/gh/MIR-MU/MIREval/tree/master.svg?style=shield)][ci]
+[![CircleCI](https://circleci.com/gh/MIR-MU/MIREVal/tree/master.svg?style=shield)][ci]
 
- [ci]: https://circleci.com/gh/MIR-MU/MIREval/tree/master (CircleCI)
+ [ci]: https://circleci.com/gh/MIR-MU/MIREVal/tree/master (CircleCI)
 
 MIREval takes final result lists produced by the [NTCIR MIaS
 Search][ntcir-mias-search] package, compares them with relevance judgements in
