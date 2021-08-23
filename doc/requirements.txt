@@ -15,7 +15,7 @@ MarkupSafe==0.23
 mistune==0.8.1
 nbconvert==4.2.0
 nbformat==4.1.0
-notebook==6.1.5
+notebook==6.4.1
 pexpect==4.2.1
 pickleshare==0.7.4
 prompt-toolkit==1.0.7
